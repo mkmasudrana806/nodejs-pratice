@@ -38,26 +38,24 @@ handler.handleReqRes = (req, res) => {
   // this will select the controller and store chosenController variable
   // then call this controller with 'requestProperties' and callback function
   const chosenController = routes[trimedPath] ? routes[trimedPath] : notFound;
-  chosenController(requestProperties, (statusCode, payload) => {
-    statusCode = typeof statusCode === "number" ? statusCode : 500;
-    payload = typeof payload === "object" ? payload : {};
 
-    const payloadString = JSON.stringify(payload);
-
-    // return the final response
-    res.writeHead(statusCode);
-    res.end(payloadString);
-  });
-
+  // read stream data and store realData variable
   req.on("data", (buffer) => {
     realData += decoder.write(buffer);
   });
 
+  // end data at last this event will be fired
   req.on("end", () => {
     realData += decoder.end();
     // response handle
-    console.log(realData);
-    res.end("Hello World");
+    chosenController(requestProperties, (statusCode, payload) => {
+      statusCode = typeof statusCode === "number" ? statusCode : 500;
+      payload = typeof payload === "object" ? payload : {};
+      const payloadString = JSON.stringify(payload);
+      // return the final response
+      res.writeHead(statusCode);
+      res.end(payloadString);
+    });
   });
 };
 
