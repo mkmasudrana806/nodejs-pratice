@@ -8,6 +8,7 @@
 // Dependencies
 const { hash, parseJSON } = require("../helpers/utilities");
 const data = require("../lib/data");
+const { tokenHandler } = require("./tokenHandler");
 
 // user all api method - module scaffolding
 const userHandler = {};
@@ -82,7 +83,6 @@ userHandler.POST = (req, callback) => {
   }
 };
 
-//TODO: implement authentication
 // ###############  handler for get user
 userHandler.GET = (req, callback) => {
   //check the phone number is valid
@@ -92,15 +92,24 @@ userHandler.GET = (req, callback) => {
       : false;
 
   if (phone) {
-    // find the user
-    data.read("users", phone, (err, user) => {
-      //parse json data and copy it into foundUser
-      const foundUser = { ...parseJSON(user) };
-      if (!err && user) {
-        delete foundUser.password; //don't pass the password
-        callback(200, foundUser);
+    //verify token
+    const token =
+      typeof req.headers.token === "string" ? req.headers.token : false;
+    tokenHandler.verify(token, phone, (tokenCheck) => {
+      if (tokenCheck) {
+        // find the user
+        data.read("users", phone, (err, user) => {
+          //parse json data and copy it into foundUser
+          const foundUser = { ...parseJSON(user) };
+          if (!err && user) {
+            delete foundUser.password; //don't pass the password
+            callback(200, foundUser);
+          } else {
+            callback(404, { message: "User not found" });
+          }
+        });
       } else {
-        callback(404, { message: "User not found" });
+        callback(403, { error: "Authentication failed" });
       }
     });
   } else {
@@ -108,7 +117,6 @@ userHandler.GET = (req, callback) => {
   }
 };
 
-//TODO: implement authentication
 // ##############  handler for update user
 userHandler.PUT = (req, callback) => {
   // validation phone, firstName, lastName and password
@@ -137,28 +145,41 @@ userHandler.PUT = (req, callback) => {
   if (!phone) return callback(400, { error: "Invalid phone number" });
   // validate other properties
   if (firstName || lastName || password) {
-    data.read("users", phone, (err, userData) => {
-      const user = { ...parseJSON(userData) };
-      if (!err && user) {
-        //update the user object
-        if (firstName) {
-          user.firstName = firstName;
-        }
-        if (lastName) {
-          user.lastName = lastName;
-        }
-        if (password) {
-          user.password = hash(password);
-        }
+    // verify token
+    const token =
+      typeof req.headers.token === "string" ? req.headers.token : false;
+    tokenHandler.verify(token, phone, (tokenCheck) => {
+      if (tokenCheck) {
+        // find user then update user
+        data.read("users", phone, (err, userData) => {
+          const user = { ...parseJSON(userData) };
+          if (!err && user) {
+            //update the user object
+            if (firstName) {
+              user.firstName = firstName;
+            }
+            if (lastName) {
+              user.lastName = lastName;
+            }
+            if (password) {
+              user.password = hash(password);
+            }
 
-        // store to the filesystem
-        data.update("users", phone, user, (err2) => {
-          if (!err2) callback(200, { message: "Your updated successfully" });
-          else
-            callback(500, { error: "there was a problem in the server side" });
+            // store to the filesystem
+            data.update("users", phone, user, (err2) => {
+              if (!err2)
+                callback(200, { message: "Your updated successfully" });
+              else
+                callback(500, {
+                  error: "there was a problem in the server side",
+                });
+            });
+          } else {
+            callback(404, { message: "User not found" });
+          }
         });
       } else {
-        callback(404, { message: "User not found" });
+        callback(403, { error: "Authentication failed" });
       }
     });
   } else {
@@ -167,24 +188,33 @@ userHandler.PUT = (req, callback) => {
 };
 
 //TODO: implement authentication
-// ############# handler for delete user
 userHandler.DELETE = (req, callback) => {
-  //check the phone number is valid
+  //phone number validation
   const phone =
     typeof req.query.phone === "string" && req.query.phone.trim().length === 11
       ? req.body.phone
       : false;
 
   if (phone) {
-    // find the user
-    data.read("users", phone, (err, user) => {
-      if (!err && user) {
-        data.delete("users", phone, (err2) => {
-          if (err2) callback(500, { error: "There was a server side error" });
-          else callback(200, { message: "User deleted successfully" });
+    // verify token and perfom operation
+    const token =
+      typeof req.headers.token === "string" ? req.headers.token : false;
+    tokenHandler.verify(token, phone, (tokenCheck) => {
+      if (tokenCheck) {
+        // find the user
+        data.read("users", phone, (err, user) => {
+          if (!err && user) {
+            data.delete("users", phone, (err2) => {
+              if (err2)
+                callback(500, { error: "There was a server side error" });
+              else callback(200, { message: "User deleted successfully" });
+            });
+          } else {
+            callback(404, { message: "User not found" });
+          }
         });
       } else {
-        callback(404, { message: "User not found" });
+        callback(403, { error: "Authentication failed" });
       }
     });
   } else {
