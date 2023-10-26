@@ -7,11 +7,12 @@
 
 // Dependencies
 const { sample, about } = require("../controller/sampleController");
+const {  usersController } = require("../controller/userController");
 
 // routes handling - module scaffolding
 const routes = {
   sample: sample,
-  about: about,
+  user: usersController,
 };
 
 // export routes

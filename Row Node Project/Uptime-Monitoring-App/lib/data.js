@@ -101,7 +101,7 @@ lib.delete = (folderName, fileName, callback) => {
   // unlink the file
   fs.unlink(`${lib.basedir + folderName + "/" + fileName}.json`, (err) => {
     if (!err) {
-      callback("File deleted successfully");
+      callback(false);
     } else {
       callback("Error to delete file!");
     }

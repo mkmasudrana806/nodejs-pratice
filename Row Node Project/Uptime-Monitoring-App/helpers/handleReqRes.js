@@ -10,6 +10,7 @@ const url = require("url");
 const { StringDecoder } = require("string_decoder");
 const notFound = require("../controller/notFoundController");
 const routes = require("../routes/routes");
+const { parseJSON } = require("./utilities");
 
 // module scaffolding
 const handler = {};
@@ -20,13 +21,13 @@ handler.handleReqRes = (req, res) => {
   const path = parseURL.pathname;
   const trimedPath = path.replace(/^\/+|\/+$/g, "");
   const method = req.method.toLowerCase();
-  const queryStringObject = parseURL.query;
+  const query = parseURL.query;
   const headers = req.headers;
   const requestProperties = {
     parseURL,
     path,
     trimedPath,
-    queryStringObject,
+    query,
     headers,
     method,
   };
@@ -47,12 +48,16 @@ handler.handleReqRes = (req, res) => {
   // end data at last this event will be fired
   req.on("end", () => {
     realData += decoder.end();
+    //include requestProperties to realData
+    requestProperties.body = parseJSON(realData);
     // response handle
     chosenController(requestProperties, (statusCode, payload) => {
       statusCode = typeof statusCode === "number" ? statusCode : 500;
       payload = typeof payload === "object" ? payload : {};
       const payloadString = JSON.stringify(payload);
+
       // return the final response
+      res.setHeader("content-type", "application/json");
       res.writeHead(statusCode);
       res.end(payloadString);
     });
