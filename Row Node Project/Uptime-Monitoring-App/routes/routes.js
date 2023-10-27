@@ -6,6 +6,7 @@
  */
 
 // Dependencies
+const { checksController } = require("../controller/checkController");
 const { sample, about } = require("../controller/sampleController");
 const { tokenController } = require("../controller/tokenHandler");
 const { usersController } = require("../controller/userController");
@@ -15,6 +16,7 @@ const routes = {
   sample: sample,
   user: usersController,
   token: tokenController,
+  check: checksController
 };
 
 // export routes
