@@ -42,7 +42,7 @@ checkHandler.POST = (req, callback) => {
 
   let method =
     typeof req.body.method === "string" &&
-    ["get", "put", "delete", "post"].includes(req.body.method)
+    ["POST", "GET", "PUT", "DELETE"].includes(req.body.method)
       ? req.body.method
       : false;
 
