@@ -161,7 +161,6 @@ tokenHandler.DELETE = (req, callback) => {
 tokenHandler.verify = (token, phone, callback) => {
   data.read("tokens", token, (err, tokenData) => {
     if (!err && tokenData) {
-      
       if (
         parseJSON(tokenData).phone === phone &&
         parseJSON(tokenData).expires > Date.now()

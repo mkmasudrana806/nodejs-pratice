@@ -13,10 +13,16 @@ const data = require("./lib/data");
 // app object - module scaffolding
 const app = {};
 
+// @TODO: remove later
+const twilioSmsSender = require("./helpers/notifications");
 // configuration : config is now under environment variable
 // app.config = {
 //   port: 3000,
 // };
+
+twilioSmsSender.sendTwilioSms("01590014148", "this", (data) => {
+  console.log("after sending twilio: ", data);
+});
 
 // create server
 app.createServer = () => {
